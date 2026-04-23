@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FDD Tool</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; background: #f5f5f5; color: #1a1a1a; padding: 24px 16px; }
+  .wrap { max-width: 680px; margin: 0 auto; }
+  h1 { font-size: 18px; font-weight: 600; margin-bottom: 6px; color: #1a1a1a; }
+  .subtitle { font-size: 13px; color: #888; margin-bottom: 20px; }
+  .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+  .card-title { font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 14px; }
+  .upload-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+  .upload-box { border: 2px dashed #ddd; border-radius: 10px; padding: 16px; text-align: center; cursor: pointer; transition: all 0.15s; }
+  .upload-box:hover { border-color: #4a90e2; background: #f0f7ff; }
+  .upload-box.ready { border-color: #22c55e; background: #f0fdf4; }
+  .upload-box.ready .ub-icon { color: #22c55e; }
+  .ub-icon { font-size: 22px; margin-bottom: 6px; color: #ccc; }
+  .ub-label { font-size: 12px; font-weight: 600; color: #555; margin-bottom: 2px; }
+  .ub-sub { font-size: 11px; color: #999; }
+  .ub-file { font-size: 11px; color: #16a34a; margin-top: 4px; font-weight: 500; word-break: break-all; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .row.full { grid-template-columns: 1fr; }
+  .fg { display: flex; flex-direction: column; gap: 4px; }
+  .fg label { font-size: 11px; color: #666; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+  input[type="text"] { width: 100%; padding: 8px 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; color: #1a1a1a; background: #fff; outline: none; transition: border-color 0.15s; }
+  input[type="text"]:focus { border-color: #4a90e2; }
+  .btn { width: 100%; padding: 10px; font-size: 14px; font-weight: 500; cursor: pointer; border-radius: 8px; border: 1px solid #ddd; background: #fff; color: #1a1a1a; transition: background 0.1s; }
+  .btn:hover { background: #f5f5f5; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-primary { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+  .btn-primary:hover { background: #333; }
+  .btn-extract { margin-bottom: 0; }
+  .status { font-size: 12px; color: #666; text-align: center; margin-top: 8px; min-height: 16px; }
+  .spinner { display: inline-block; width: 11px; height: 11px; border: 2px solid #ddd; border-top-color: #333; border-radius: 50%; animation: spin 0.6s linear infinite; vertical-align: middle; margin-right: 4px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .divider { border: none; border-top: 1px solid #f0f0f0; margin: 14px 0; }
+  .review-section { display: none; }
+  .review-section.visible { display: block; }
+  .review-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .review-grid.full { grid-template-columns: 1fr; }
+  .output { display: none; }
+  .output.visible { display: block; }
+  .out-card { background: #fafafa; border: 1px solid #e5e5e5; border-radius: 12px; padding: 20px; }
+  .out-title { font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 14px; }
+  .step { margin-bottom: 20px; }
+  .step-label { font-size: 10px; font-weight: 700; color: #aaa; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+  .fl { display: flex; justify-content: space-between; align-items: baseline; padding: 6px 0; border-bottom: 1px solid #f0f0f0; gap: 16px; }
+  .fl:last-child { border-bottom: none; }
+  .fl-k { color: #888; font-size: 13px; white-space: nowrap; flex-shrink: 0; }
+  .fl-v { font-size: 13px; font-weight: 500; color: #1a1a1a; text-align: right; cursor: pointer; border-radius: 4px; padding: 2px 6px; transition: background 0.1s; }
+  .fl-v:hover { background: #ebf3fd; color: #2563eb; }
+  .copy-msg { font-size: 12px; color: #16a34a; text-align: center; margin-top: 8px; min-height: 16px; }
+  .tip { font-size: 12px; color: #aaa; margin-top: 8px; }
+  .reset-link { font-size: 12px; color: #888; cursor: pointer; background: none; border: none; padding: 0; margin-top: 10px; text-decoration: underline; display: block; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>FDD Tool</h1>
+  <p class="subtitle">Upload the Elavon tearsheet and signed application to auto-fill all fields.</p>
+
+  <div class="card">
+    <p class="card-title">Step 1 — Upload documents</p>
+    <div class="upload-grid">
+      <div class="upload-box" id="box-tearsheet" onclick="document.getElementById('upload-tearsheet').click()">
+        <div class="ub-icon">📄</div>
+        <div class="ub-label">Elavon Tearsheet</div>
+        <div class="ub-sub">PDF — or enter TID manually below</div>
+        <div class="ub-file" id="name-tearsheet"></div>
+      </div>
+      <div class="upload-box" id="box-application" onclick="document.getElementById('upload-application').click()">
+        <div class="ub-icon">📋</div>
+        <div class="ub-label">Signed Application</div>
+        <div class="ub-sub">PDF</div>
+        <div class="ub-file" id="name-application"></div>
+      </div>
+    </div>
+    <input type="file" id="upload-tearsheet" accept="application/pdf" style="display:none" onchange="handlePDF('tearsheet', this)">
+    <input type="file" id="upload-application" accept="application/pdf" style="display:none" onchange="handlePDF('application', this)">
+
+    <div class="row full" style="margin-bottom:4px;">
+      <div class="fg">
+        <label>Terminal ID (TID) — type here if no tearsheet PDF</label>
+        <input type="text" id="manual-tid" placeholder="e.g. 0008046653336924" style="font-size:15px; font-weight:500; letter-spacing:0.04em;" oninput="checkReady()">
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="row full" style="margin-bottom:12px;">
+      <div class="fg">
+        <label>Sales Rep (first name) — from PulsePoint</label>
+        <input type="text" id="sales-rep" placeholder="e.g. Felix">
+      </div>
+    </div>
+
+    <button class="btn btn-extract" id="extract-btn" disabled onclick="extractAll()">Extract all fields from documents</button>
+    <p class="status" id="extract-status"></p>
+  </div>
+
+  <div class="review-section" id="review-section">
+    <div class="card">
+      <p class="card-title">Step 2 — Review extracted fields</p>
+      <div class="review-grid full">
+        <div class="fg"><label>Terminal ID (TID)</label><input type="text" id="tid" placeholder="—"></div>
+      </div>
+      <div class="review-grid" style="margin-top:10px;">
+        <div class="fg"><label>DBA (Business Name)</label><input type="text" id="dba" placeholder="—"></div>
+        <div class="fg"><label>MCC code</label><input type="text" id="mcc" placeholder="—"></div>
+      </div>
+      <div class="review-grid">
+        <div class="fg"><label>Business Type</label><input type="text" id="biz-type" placeholder="—"></div>
+        <div class="fg"><label>Currency</label><input type="text" id="currency" placeholder="—"></div>
+      </div>
+      <div class="review-grid full">
+        <div class="fg"><label>Address Line 1</label><input type="text" id="addr1" placeholder="—"></div>
+      </div>
+      <div class="review-grid">
+        <div class="fg"><label>City</label><input type="text" id="city" placeholder="—"></div>
+        <div class="fg"><label>Province</label><input type="text" id="province" placeholder="—"></div>
+      </div>
+      <div class="review-grid">
+        <div class="fg"><label>Postal Code</label><input type="text" id="postal" placeholder="—"></div>
+        <div class="fg"></div>
+      </div>
+      <div class="review-grid">
+        <div class="fg"><label>Owner First Name</label><input type="text" id="first" placeholder="—"></div>
+        <div class="fg"><label>Owner Last Name</label><input type="text" id="last" placeholder="—"></div>
+      </div>
+      <div class="review-grid">
+        <div class="fg"><label>Tax ID (4 digits)</label><input type="text" id="taxid" placeholder="—" maxlength="4"></div>
+        <div class="fg"></div>
+      </div>
+      <div class="divider"></div>
+      <button class="btn btn-primary" onclick="generate()">Generate Authorize.net summary →</button>
+    </div>
+  </div>
+
+  <div class="output" id="output">
+    <div class="out-card">
+      <p class="out-title">Authorize.net — form summary</p>
+      <div class="step">
+        <p class="step-label">Step 1 — sales profile</p>
+        <div class="fl"><span class="fl-k">Market Type</span><span class="fl-v" onclick="cp(this)">Ecommerce</span></div>
+        <div class="fl"><span class="fl-k">Sales Profile</span><span class="fl-v" onclick="cp(this)">Custom Pricing</span></div>
+      </div>
+      <div class="step">
+        <p class="step-label">Step 2 — merchant account details</p>
+        <div class="fl"><span class="fl-k">Reference ID</span><span class="fl-v" onclick="cp(this)" id="o-ref">—</span></div>
+        <div class="fl"><span class="fl-k">Sales Rep ID</span><span class="fl-v" onclick="cp(this)" id="o-rep">—</span></div>
+        <div class="fl"><span class="fl-k">Business Name</span><span class="fl-v" onclick="cp(this)" id="o-biz">—</span></div>
+        <div class="fl"><span class="fl-k">MCC</span><span class="fl-v" onclick="cp(this)" id="o-mcc">—</span></div>
+        <div class="fl"><span class="fl-k">Business Type</span><span class="fl-v" onclick="cp(this)" id="o-type">—</span></div>
+        <div class="fl"><span class="fl-k">Country</span><span class="fl-v" onclick="cp(this)">Canada</span></div>
+        <div class="fl"><span class="fl-k">Address Line 1</span><span class="fl-v" onclick="cp(this)" id="o-a1">—</span></div>
+        <div class="fl"><span class="fl-k">City</span><span class="fl-v" onclick="cp(this)" id="o-city">—</span></div>
+        <div class="fl"><span class="fl-k">Province</span><span class="fl-v" onclick="cp(this)" id="o-prov">—</span></div>
+        <div class="fl"><span class="fl-k">Postal Code</span><span class="fl-v" onclick="cp(this)" id="o-post">—</span></div>
+        <div class="fl"><span class="fl-k">Business Phone</span><span class="fl-v" onclick="cp(this)">8885009340</span></div>
+        <div class="fl"><span class="fl-k">Owner First Name</span><span class="fl-v" onclick="cp(this)" id="o-first">—</span></div>
+        <div class="fl"><span class="fl-k">Owner Last Name</span><span class="fl-v" onclick="cp(this)" id="o-last">—</span></div>
+        <div class="fl"><span class="fl-k">Owner Phone</span><span class="fl-v" onclick="cp(this)">8885009340</span></div>
+        <div class="fl"><span class="fl-k">Owner Email</span><span class="fl-v" onclick="cp(this)">onboarding@cpos.com</span></div>
+      </div>
+      <div class="step">
+        <p class="step-label">Step 3 — card processing configuration</p>
+        <div class="fl"><span class="fl-k">Acquirer</span><span class="fl-v" onclick="cp(this)">Undetermined</span></div>
+        <div class="fl"><span class="fl-k">Processor Name</span><span class="fl-v" onclick="cp(this)">Elavon</span></div>
+        <div class="fl"><span class="fl-k">Currency</span><span class="fl-v" onclick="cp(this)" id="o-cur">—</span></div>
+        <div class="fl"><span class="fl-k">Bank Number</span><span class="fl-v" onclick="cp(this)">008925</span></div>
+        <div class="fl"><span class="fl-k">Terminal ID (TID)</span><span class="fl-v" onclick="cp(this)" id="o-tid">—</span></div>
+        <div class="fl"><span class="fl-k">Card Types</span><span class="fl-v" onclick="cp(this)">All</span></div>
+      </div>
+      <div class="step">
+        <p class="step-label">Step 4 — confirm</p>
+        <div class="fl"><span class="fl-k">Action</span><span class="fl-v" onclick="cp(this)">Add Merchant</span></div>
+      </div>
+      <div class="step">
+        <p class="step-label">CPOS business address</p>
+        <div class="fl"><span class="fl-k">Address</span><span class="fl-v" onclick="cp(this)">251 Laurier Ave W</span></div>
+        <div class="fl"><span class="fl-k">Postal Code</span><span class="fl-v" onclick="cp(this)">K1P 5J6</span></div>
+      </div>
+      <div class="step" style="margin-bottom:0">
+        <p class="step-label">Tax ID</p>
+        <div class="fl"><span class="fl-k">Tax ID</span><span class="fl-v" onclick="cp(this)" id="o-taxid">—</span></div>
+      </div>
+      <p class="tip">Click any value to copy it to clipboard.</p>
+      <p class="copy-msg" id="copy-msg"></p>
+      <div style="margin-top:14px;border-top:1px solid #eee;padding-top:14px;"><button class="btn btn-primary" style="margin-bottom:8px;" onclick="sendToExtension()">Send to Chrome Extension &rarr;</button><p style="font-size:11px;color:#aaa;text-align:center;margin-top:6px;">Then open Authorize.net Add Merchant and click Auto-fill in the extension.</p><p style="font-size:12px;color:#16a34a;text-align:center;margin-top:4px;min-height:16px;" id="ext-msg"></p></div>
+      <button class="reset-link" onclick="reset()">← Start over with a new merchant</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let files = { tearsheet: null, application: null };
+
+function handlePDF(type, input) {
+  const file = input.files[0];
+  if (!file) return;
+  loadFile(type, file);
+}
+
+function checkReady() {
+  const manualTid = document.getElementById('manual-tid').value.trim();
+  const hasApp = !!files.application;
+  document.getElementById('extract-btn').disabled = !(hasApp && (files.tearsheet || manualTid));
+}
+
+function loadFile(type, file) {
+  if (!file || file.type !== 'application/pdf') return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    files[type] = { data: e.target.result.split(',')[1], name: file.name };
+    document.getElementById('name-' + type).textContent = file.name;
+    document.getElementById('box-' + type).classList.add('ready');
+    checkReady();
+  };
+  reader.readAsDataURL(file);
+}
+
+['tearsheet','application'].forEach(type => {
+  const box = document.getElementById('box-' + type);
+  box.addEventListener('dragover', e => { e.preventDefault(); box.style.borderColor = '#4a90e2'; box.style.background = '#f0f7ff'; });
+  box.addEventListener('dragleave', () => { box.style.borderColor = ''; box.style.background = ''; });
+  box.addEventListener('drop', e => {
+    e.preventDefault();
+    box.style.borderColor = ''; box.style.background = '';
+    const file = e.dataTransfer.files[0];
+    if (file) loadFile(type, file);
+  });
+});
+
+async function extractAll() {
+  const btn = document.getElementById('extract-btn');
+  const status = document.getElementById('extract-status');
+  const manualTid = document.getElementById('manual-tid').value.trim();
+  btn.disabled = true;
+  status.innerHTML = '<span class="spinner"></span>Extracting fields from documents...';
+
+  try {
+    // Build content blocks — tearsheet is optional if TID entered manually
+    const contentBlocks = [];
+    if (files.tearsheet) {
+      contentBlocks.push({ type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: files.tearsheet.data } });
+    }
+    contentBlocks.push({ type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: files.application.data } });
+
+    const tidInstruction = files.tearsheet
+      ? '- tid: Terminal ID from the Elavon tearsheet (digits only, no spaces, concatenate if multiline)'
+      : `- tid: Use exactly this value: "${manualTid}"`;
+
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 600,
+        system: `You extract merchant data from PDFs: ${files.tearsheet ? 'an Elavon tearsheet and ' : ''}a signed company application.
+Return ONLY a JSON object with these exact keys:
+${tidInstruction}
+- dba: DBA business name from the signed application "DBA Name" field in Company Information (use the casing exactly as written, not from the tearsheet)
+- mcc: numeric MCC code only (digits before the dash in Merchant Category Code/SIC Code)
+- biz_type: ownership type from "Substitute Form W8BEN" section (e.g. "C Corporation - Private Company")
+- addr1: first line of DBA street address only — ignore unit/suite number on a second line (e.g. "325 Stirling Avenue South" not "325 Stirling Avenue South 2")
+- city: city from DBA address
+- province: 2-letter province code from DBA address (e.g. ON)
+- postal: postal code from DBA address
+- owner_first: first name of Main Principal / Contact Name
+- owner_last: last name of Main Principal / Contact Name
+- currency: 3-letter currency code only (e.g. CAD from "Canadian Dollars")
+- taxid: last 4 digits of Tax ID BNR only (e.g. from "*** - ** 1 - 066" return "1066", concatenate the last two groups)
+- sales_rep: first name only from salesperson first name only
+No markdown, no backticks, no explanation. Empty string if not found.`,
+        messages: [{
+          role: 'user',
+          content: [...contentBlocks, { type: 'text', text: 'Extract all merchant fields from these documents.' }]
+        }]
+      })
+    });
+
+    const data = await resp.json();
+    const text = data.content.filter(b => b.type === 'text').map(b => b.text).join('');
+    const p = JSON.parse(text.replace(/```json|```/g, '').trim());
+
+    const set = (id, val) => { if (val) document.getElementById(id).value = val; };
+    set('tid', p.tid || manualTid);
+    set('dba', p.dba); set('mcc', p.mcc);
+    set('biz-type', p.biz_type); set('addr1', p.addr1); set('city', p.city);
+    set('province', p.province); set('postal', p.postal);
+    set('first', p.owner_first); set('last', p.owner_last);
+    set('currency', p.currency); set('taxid', p.taxid);
+
+    document.getElementById('review-section').classList.add('visible');
+    document.getElementById('review-section').scrollIntoView({ behavior: 'smooth' });
+    status.textContent = 'Done — review the fields below, then click Generate.';
+    btn.disabled = false;
+  } catch(e) {
+    status.textContent = 'Extraction failed — please check the files and try again.';
+    btn.disabled = false;
+  }
+}
+
+function g(id) { const el = document.getElementById(id); return el ? el.value.trim() : ''; }
+function s(id, val) { document.getElementById(id).textContent = val || '—'; }
+
+function generate() {
+  const dba = g('dba');
+  s('o-ref', dba); s('o-biz', dba);
+  s('o-rep', g('sales-rep'));
+  s('o-mcc', g('mcc')); s('o-type', g('biz-type'));
+  s('o-a1', g('addr1')); s('o-city', g('city'));
+  s('o-prov', g('province')); s('o-post', g('postal'));
+  s('o-first', g('first')); s('o-last', g('last'));
+  s('o-cur', g('currency')); s('o-tid', g('tid'));
+  s('o-taxid', g('taxid'));
+  document.getElementById('output').classList.add('visible');
+  document.getElementById('output').scrollIntoView({ behavior: 'smooth' });
+}
+
+function cp(el) {
+  const val = el.textContent;
+  if (!val || val === '—') return;
+  const msg = document.getElementById('copy-msg');
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(val).then(() => {
+      msg.textContent = '"' + val + '" copied';
+      setTimeout(() => { msg.textContent = ''; }, 2000);
+    }).catch(() => fallbackCopy(val, msg));
+  } else {
+    fallbackCopy(val, msg);
+  }
+}
+
+function fallbackCopy(val, msg) {
+  const ta = document.createElement('textarea');
+  ta.value = val;
+  ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;';
+  document.body.appendChild(ta);
+  ta.focus(); ta.select();
+  try {
+    document.execCommand('copy');
+    msg.textContent = '"' + val + '" copied';
+    setTimeout(() => { msg.textContent = ''; }, 2000);
+  } catch(e) {
+    msg.textContent = 'Could not copy — please select and copy manually.';
+    setTimeout(() => { msg.textContent = ''; }, 3000);
+  }
+  document.body.removeChild(ta);
+}
+
+function sendToExtension() {
+  const data = {
+    dba: g('dba'),
+    tid: g('tid'),
+    mcc: g('mcc'),
+    salesRep: g('sales-rep'),
+    bizType: g('biz-type'),
+    addr1: g('addr1'),
+    city: g('city'),
+    province: g('province'),
+    postal: g('postal'),
+    ownerFirst: g('first'),
+    ownerLast: g('last'),
+    currency: g('currency'),
+    taxid: g('taxid')
+  };
+  // Store in localStorage so the extension can read it
+  localStorage.setItem('cpos_merchant_data', JSON.stringify(data));
+  // Also try posting to extension via custom event
+  window.dispatchEvent(new CustomEvent('cpos_send_data', { detail: data }));
+  const msg = document.getElementById('ext-msg');
+  msg.textContent = '✓ Data saved — open the extension and click Auto-fill on Authorize.net';
+  setTimeout(() => { msg.textContent = ''; }, 5000);
+}
+
+function reset() {
+  files = { tearsheet: null, application: null };
+  ['tearsheet','application'].forEach(t => {
+    document.getElementById('box-' + t).classList.remove('ready');
+    document.getElementById('name-' + t).textContent = '';
+    document.getElementById('upload-' + t).value = '';
+  });
+  ['tid','dba','mcc','biz-type','addr1','city','province','postal','first','last','currency','taxid','sales-rep','manual-tid'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  document.getElementById('extract-btn').disabled = true;
+  document.getElementById('extract-status').textContent = '';
+  document.getElementById('review-section').classList.remove('visible');
+  document.getElementById('output').classList.remove('visible');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+</script>
+</body>
+</html>
